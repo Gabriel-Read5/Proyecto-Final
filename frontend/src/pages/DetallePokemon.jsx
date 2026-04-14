@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { obtenerPokemonPorNombre } from '../services/pokeapi'
 
 function DetallePokemon() {
@@ -23,47 +24,80 @@ function DetallePokemon() {
   }, [nombre])
 
   if (cargando) {
-    return <div className="contenedor"><p>Cargando...</p></div>
+    return (
+      <div className="contenedor">
+        <div className="estado-vista">
+          <p>Cargando...</p>
+        </div>
+      </div>
+    )
   }
 
   if (!pokemon) {
-    return <div className="contenedor"><p>No se encontró el Pokémon.</p></div>
+    return (
+      <div className="contenedor">
+        <div className="estado-vista">
+          <p>No se encontró el Pokémon.</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="contenedor">
       <Link to="/" className="boton-volver">← Volver</Link>
 
-      <div className="detalle-card">
-        <img
-          src={pokemon.sprites.front_default}
-          alt={pokemon.name}
-          className="detalle-imagen"
-        />
+      <motion.div
+        className="detalle-card"
+        initial={{ opacity: 0, y: 25 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="detalle-superior">
+          <img
+            src={pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default}
+            alt={pokemon.name}
+            className="detalle-imagen"
+          />
 
-        <h1>{pokemon.name}</h1>
-        <p><strong>ID:</strong> {pokemon.id}</p>
-        <p><strong>Altura:</strong> {pokemon.height}</p>
-        <p><strong>Peso:</strong> {pokemon.weight}</p>
+          <div className="detalle-info">
+            <h1 className="detalle-titulo">{pokemon.name}</h1>
+            <p><strong>ID:</strong> {pokemon.id}</p>
+            <p><strong>Altura:</strong> {pokemon.height}</p>
+            <p><strong>Peso:</strong> {pokemon.weight}</p>
 
-        <div>
-          <strong>Tipos:</strong>
-          <ul>
-            {pokemon.types.map((tipo) => (
-              <li key={tipo.type.name}>{tipo.type.name}</li>
-            ))}
-          </ul>
+            <div className="chips-contenedor">
+              {pokemon.types.map((tipo) => (
+                <span key={tipo.type.name} className="chip">
+                  {tipo.type.name}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div>
-          <strong>Habilidades:</strong>
-          <ul>
-            {pokemon.abilities.map((habilidad) => (
-              <li key={habilidad.ability.name}>{habilidad.ability.name}</li>
-            ))}
-          </ul>
+        <div className="detalle-secciones">
+          <div className="detalle-bloque">
+            <h3>Habilidades</h3>
+            <ul>
+              {pokemon.abilities.map((habilidad) => (
+                <li key={habilidad.ability.name}>{habilidad.ability.name}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="detalle-bloque">
+            <h3>Estadísticas</h3>
+            <ul>
+              {pokemon.stats.map((stat) => (
+                <li key={stat.stat.name}>
+                  {stat.stat.name}: {stat.base_stat}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

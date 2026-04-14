@@ -1,14 +1,21 @@
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 
 function Navbar() {
   return (
-    <nav className="barra">
+    <motion.nav
+      className="barra"
+      initial={{ opacity: 0, y: -15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+    >
       <div className="contenedor barra-contenido">
         <Link to="/" className="logo">
-          PokÃ©dex Web
+          Pokédex Web
         </Link>
+        <span className="marca-secundaria">React · PokeAPI · PowerShell</span>
       </div>
-    </nav>
+    </motion.nav>
   )
 }
 
