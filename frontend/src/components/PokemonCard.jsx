@@ -2,8 +2,11 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
 function PokemonCard({ pokemon, esFavorito, alCambiarFavorito }) {
-  const id = pokemon.url.split('/').filter(Boolean).pop()
-  const imagen = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
+  const id = pokemon.detalle?.id || pokemon.url.split('/').filter(Boolean).pop()
+  const imagen =
+    pokemon.detalle?.sprites?.other?.['official-artwork']?.front_default ||
+    pokemon.detalle?.sprites?.front_default ||
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
 
   return (
     <motion.div
@@ -22,9 +25,19 @@ function PokemonCard({ pokemon, esFavorito, alCambiarFavorito }) {
         {esFavorito ? '★' : '☆'}
       </button>
 
+      <span className="pokemon-id">#{String(id).padStart(3, '0')}</span>
+
       <img src={imagen} alt={pokemon.name} className="pokemon-imagen" />
 
       <h3 className="pokemon-nombre">{pokemon.name}</h3>
+
+      <div className="chips-contenedor chips-card">
+        {pokemon.detalle?.types?.map((tipo) => (
+          <span key={tipo.type.name} className="chip">
+            {tipo.type.name}
+          </span>
+        ))}
+      </div>
 
       <div className="acciones-card">
         <Link to={`/pokemon/${pokemon.name}`} className="boton">

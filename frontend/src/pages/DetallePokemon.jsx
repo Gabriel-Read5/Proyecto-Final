@@ -61,8 +61,11 @@ function DetallePokemon() {
           />
 
           <div className="detalle-info">
-            <h1 className="detalle-titulo">{pokemon.name}</h1>
-            <p><strong>ID:</strong> {pokemon.id}</p>
+            <h1 className="detalle-titulo">
+              #{String(pokemon.id).padStart(3, '0')} {pokemon.name}
+            </h1>
+
+            <p><strong>Experiencia base:</strong> {pokemon.base_experience}</p>
             <p><strong>Altura:</strong> {pokemon.height}</p>
             <p><strong>Peso:</strong> {pokemon.weight}</p>
 
@@ -87,14 +90,23 @@ function DetallePokemon() {
           </div>
 
           <div className="detalle-bloque">
-            <h3>Estadísticas</h3>
-            <ul>
+            <h3>Estadísticas base</h3>
+            <div className="stats-lista">
               {pokemon.stats.map((stat) => (
-                <li key={stat.stat.name}>
-                  {stat.stat.name}: {stat.base_stat}
-                </li>
+                <div key={stat.stat.name} className="stat-item">
+                  <div className="stat-header">
+                    <span className="stat-nombre">{stat.stat.name}</span>
+                    <span className="stat-valor">{stat.base_stat}</span>
+                  </div>
+                  <div className="barra-stat-fondo">
+                    <div
+                      className="barra-stat"
+                      style={{ width: `${Math.min(stat.base_stat, 150) / 1.5}%` }}
+                    ></div>
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
       </motion.div>
