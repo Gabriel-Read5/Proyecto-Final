@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
-function PokemonCard({ pokemon, esFavorito, alCambiarFavorito }) {
+function PokemonCard({ pokemon, esFavorito, alCambiarFavorito, alVistaRapida }) {
   const id = pokemon.detalle?.id || pokemon.url.split('/').filter(Boolean).pop()
   const imagen =
     pokemon.detalle?.sprites?.other?.['official-artwork']?.front_default ||
@@ -39,7 +39,11 @@ function PokemonCard({ pokemon, esFavorito, alCambiarFavorito }) {
         ))}
       </div>
 
-      <div className="acciones-card">
+      <div className="acciones-card acciones-card-dobles">
+        <button type="button" className="boton-limpiar" onClick={() => alVistaRapida(pokemon.detalle)}>
+          Vista rápida
+        </button>
+
         <Link to={`/pokemon/${pokemon.name}`} className="boton">
           Ver detalle
         </Link>

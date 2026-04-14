@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
-function Navbar() {
+function Navbar({ tema, alternarTema }) {
   return (
     <motion.nav
       className="barra"
@@ -10,10 +10,39 @@ function Navbar() {
       transition={{ duration: 0.25 }}
     >
       <div className="contenedor barra-contenido">
-        <Link to="/" className="logo">
-          Pokédex Web
-        </Link>
-        <span className="marca-secundaria">React · PokeAPI · PowerShell</span>
+        <div className="nav-izquierda">
+          <Link to="/" className="logo">
+            Pokédex Web
+          </Link>
+          <span className="marca-secundaria">React · PokeAPI · PowerShell</span>
+        </div>
+
+        <div className="nav-enlaces">
+          <NavLink
+            to="/"
+            className={({ isActive }) => (isActive ? 'nav-link activo' : 'nav-link')}
+          >
+            Inicio
+          </NavLink>
+
+          <NavLink
+            to="/favoritos"
+            className={({ isActive }) => (isActive ? 'nav-link activo' : 'nav-link')}
+          >
+            Favoritos
+          </NavLink>
+
+          <NavLink
+            to="/comparador"
+            className={({ isActive }) => (isActive ? 'nav-link activo' : 'nav-link')}
+          >
+            Comparador
+          </NavLink>
+
+          <button type="button" className="boton-tema" onClick={alternarTema}>
+            {tema === 'oscuro' ? '☀️ Claro' : '🌙 Oscuro'}
+          </button>
+        </div>
       </div>
     </motion.nav>
   )

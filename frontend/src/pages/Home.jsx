@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import { obtenerPokemones, obtenerPokemonPorNombre, obtenerTipos } from '../services/pokeapi'
 import { obtenerFavoritos, alternarFavorito } from '../services/favoritos'
 import PokemonCard from '../components/PokemonCard'
+import ModalPokemon from '../components/ModalPokemon'
+import EstadoError from '../components/EstadoError'
 
 function Home() {
   const [pokemonesDetallados, setPokemonesDetallados] = useState([])
@@ -14,42 +16,46 @@ function Home() {
   const [cargando, setCargando] = useState(true)
   const [orden, setOrden] = useState('numero-asc')
   const [paginaActual, setPaginaActual] = useState(1)
+  const [pokemonModal, setPokemonModal] = useState(null)
+  const [error, setError] = useState('')
 
   const pokemonesPorPagina = 24
+
+  const cargarDatos = async () => {
+    try {
+      setError('')
+      setCargando(true)
+
+      const [listaBase, listaTipos] = await Promise.all([
+        obtenerPokemones(151),
+        obtenerTipos()
+      ])
+
+      setTipos(listaTipos)
+
+      const detalles = await Promise.all(
+        listaBase.map((pokemon) => obtenerPokemonPorNombre(pokemon.name))
+      )
+
+      const combinados = listaBase.map((pokemon, index) => ({
+        ...pokemon,
+        detalle: detalles[index]
+      }))
+
+      setPokemonesDetallados(combinados)
+    } catch (error) {
+      console.error('Error al cargar datos:', error)
+      setError('No se pudieron cargar los Pokémon. Verifica tu conexión e inténtalo de nuevo.')
+    } finally {
+      setCargando(false)
+    }
+  }
 
   useEffect(() => {
     setFavoritos(obtenerFavoritos())
   }, [])
 
   useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        setCargando(true)
-
-        const [listaBase, listaTipos] = await Promise.all([
-          obtenerPokemones(151),
-          obtenerTipos()
-        ])
-
-        setTipos(listaTipos)
-
-        const detalles = await Promise.all(
-          listaBase.map((pokemon) => obtenerPokemonPorNombre(pokemon.name))
-        )
-
-        const combinados = listaBase.map((pokemon, index) => ({
-          ...pokemon,
-          detalle: detalles[index]
-        }))
-
-        setPokemonesDetallados(combinados)
-      } catch (error) {
-        console.error('Error al cargar datos:', error)
-      } finally {
-        setCargando(false)
-      }
-    }
-
     cargarDatos()
   }, [])
 
@@ -57,10 +63,35 @@ function Home() {
     setPaginaActual(1)
   }, [busqueda, tipoSeleccionado, soloFavoritos, orden])
 
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
+  }, [paginaActual])
+
   const manejarFavorito = (nombre) => {
     const actualizados = alternarFavorito(nombre)
     setFavoritos(actualizados)
   }
+
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setTipoSeleccionado('')
+    setSoloFavoritos(false)
+    setOrden('numero-asc')
+    setPaginaActual(1)
+  }
+
+  const sugerenciasBusqueda = useMemo(() => {
+    if (!busqueda.trim()) return []
+
+    return pokemonesDetallados
+      .filter((pokemon) =>
+        pokemon.name.toLowerCase().includes(busqueda.toLowerCase())
+      )
+      .slice(0, 5)
+  }, [busqueda, pokemonesDetallados])
 
   const pokemonesFiltrados = useMemo(() => {
     let resultado = pokemonesDetallados.filter((pokemon) => {
@@ -97,8 +128,7 @@ function Home() {
     return resultado
   }, [pokemonesDetallados, busqueda, tipoSeleccionado, soloFavoritos, favoritos, orden])
 
-  const totalPaginas = Math.ceil(pokemonesFiltrados.length / pokemonesPorPagina)
-
+  const totalPaginas = Math.max(1, Math.ceil(pokemonesFiltrados.length / pokemonesPorPagina))
   const inicio = (paginaActual - 1) * pokemonesPorPagina
   const fin = inicio + pokemonesPorPagina
   const pokemonesPaginados = pokemonesFiltrados.slice(inicio, fin)
@@ -126,13 +156,32 @@ function Home() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <input
-          type="text"
-          placeholder="Busca un Pokémon por nombre..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="input-busqueda"
-        />
+        <div className="busqueda-contenedor">
+          <input
+            type="text"
+            placeholder="Busca un Pokémon por nombre..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="input-busqueda"
+            aria-label="Buscar Pokémon por nombre"
+          />
+
+          {busqueda && sugerenciasBusqueda.length > 0 && (
+            <div className="autocomplete-lista" id="lista-autocompletado" role="listbox">
+              {sugerenciasBusqueda.map((pokemon) => (
+                <button
+                  key={pokemon.name}
+                  type="button"
+                  className="autocomplete-item"
+                  onClick={() => setBusqueda(pokemon.name)}
+                  role="option"
+                >
+                  #{String(pokemon.detalle.id).padStart(3, '0')} {pokemon.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <select
           value={tipoSeleccionado}
@@ -165,6 +214,14 @@ function Home() {
         >
           {soloFavoritos ? 'Mostrando favoritos' : 'Ver solo favoritos'}
         </button>
+
+        <button
+          type="button"
+          className="boton-limpiar"
+          onClick={limpiarFiltros}
+        >
+          Limpiar filtros
+        </button>
       </motion.section>
 
       <section className="resumen-barra">
@@ -184,11 +241,18 @@ function Home() {
 
       {cargando ? (
         <div className="estado-vista">
-          <p>Cargando los 151 Pokémon...</p>
+          <p>Cargando Pokémon...</p>
         </div>
+      ) : error ? (
+        <EstadoError
+          titulo="No se pudo cargar la Pokédex"
+          mensaje={error}
+          onReintentar={cargarDatos}
+        />
       ) : pokemonesFiltrados.length === 0 ? (
         <div className="estado-vista">
-          <p>No se encontraron Pokémon con esos filtros.</p>
+          <h3>No se encontraron Pokémon</h3>
+          <p>Prueba cambiando la búsqueda o limpiando los filtros.</p>
         </div>
       ) : (
         <>
@@ -199,6 +263,7 @@ function Home() {
                 pokemon={pokemon}
                 esFavorito={favoritos.includes(pokemon.name)}
                 alCambiarFavorito={manejarFavorito}
+                alVistaRapida={setPokemonModal}
               />
             ))}
           </div>
@@ -228,6 +293,12 @@ function Home() {
           </div>
         </>
       )}
+
+      <ModalPokemon
+        pokemon={pokemonModal}
+        abierto={Boolean(pokemonModal)}
+        alCerrar={() => setPokemonModal(null)}
+      />
     </div>
   )
 }
